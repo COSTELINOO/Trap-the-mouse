@@ -111,9 +111,14 @@ fn liste_de_adiacenta(liste: &mut Vec<Vec<usize>>, tabla: [[u8; 13]; 13]) {
     }
 }
 
+
+
+
+
+
+
 fn main()  {
     let mut tabla;
-
     tabla=initializare_tabla();
 adaugare_obstacole(& mut tabla,10);
     while tabla[4][5]==1&&tabla[4][6]==1&&tabla[5][4]==1&&tabla[5][6]==1&&tabla[6][5]==1&&tabla[6][6]==1
@@ -141,7 +146,7 @@ adaugare_obstacole(& mut tabla,10);
     println!();
     i=0;
 
-
+println!("Matrice obstacole: ");
     while i<11
     {
         j=0;
