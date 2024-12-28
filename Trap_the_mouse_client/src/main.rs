@@ -25,8 +25,11 @@ use iced_futures::backend::default;
 use iced_futures::executor;
 use futures::executor::block_on;
 use crate::forme::set_tema;
+use crate::model::Role;
 
 #[derive(Debug,Clone)]
+
+
 pub struct MyApp {
     model: Model,
     dimensions: (u32, u32),
@@ -34,16 +37,18 @@ pub struct MyApp {
     pub id_tema:u32,
     pub tema: forme::Tema,
 
+
 }
 
 impl  MyApp {
 
    pub fn new() -> Self {
         MyApp {
-            model: Model { current_page: Page::Menu, role: None, pin: None },
+            model: Model { current_page: Page::Menu, role: Some(Role::Hunter), pin: None },
             dimensions: (800, 600),id: Id::unique(),id_tema:4,
             tema: forme::Tema{COLORS: [
-                "1b1b1b".to_string(),"77abb6".to_string(), "f1ac20".to_string(),"023336".to_string()
+               // "1b1b1b".to_string(),"77abb6".to_string(), "f1ac20".to_string(),"023336".to_string()
+                "2a3517".to_string(),"8f9c77".to_string(), "cfe1b9".to_string(),"e7f5dc".to_string()
             ],},
 
 
@@ -52,7 +57,7 @@ impl  MyApp {
 
     fn update(&mut self, message: Message) -> Task<Message> {
 
-        update(message, &mut self.model,&mut self.dimensions,& mut self.tema);
+        update(message, self);
 
         Task::none()
     }
@@ -60,7 +65,7 @@ impl  MyApp {
     fn view(& self) -> iced::Element<'_,Message> {
 
 
-        view(&self.model,&self.dimensions,&self.tema)
+        view(&self)
     }
 
     fn subscription(&self) -> Subscription<Message> {
@@ -117,11 +122,11 @@ fn main() ->iced:: Result{
     // Configurarea aplicatiei
 
     // Ruleaza aplicatia cu dimensiunea configurata
-   iced::application("Counter Example", MyApp::update, MyApp::view)
+   iced::application("Trap The Mouse", MyApp::update, MyApp::view)
         .window(window::Settings {
-            size: iced::Size::new(800.0, 600.0),  // Setezi dimensiunea ferestrei
+            size: iced::Size::new(800.0, 670.0),  // Setezi dimensiunea ferestrei
             position: Position::Centered,    // Pozitia implicita a ferestrei
-            min_size: Some(iced::Size::new(660.0, 600.0)),                 // Fereastra nu are dimensiune minima
+            min_size: Some(iced::Size::new(670.0, 670.0)),                 // Fereastra nu are dimensiune minima
             max_size: None,                 // Fereastra nu are dimensiune maxima
             visible: true,                  // Fereastra este vizibila
             resizable: true,                // Fereastra este redimensionabila

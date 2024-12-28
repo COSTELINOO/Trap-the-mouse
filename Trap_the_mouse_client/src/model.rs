@@ -12,7 +12,7 @@ pub enum Page {
 }
 
 // Definirea sub-paginilor din TwoPlayers
-#[derive(Debug,Clone)]
+#[derive(Debug,Clone,PartialEq)]
 pub enum Role {
     Mouse,
     Hunter,

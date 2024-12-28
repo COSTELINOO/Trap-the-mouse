@@ -10,6 +10,7 @@ pub enum Message {
     NavigateToCreate,
     NavigateToGameBoard,
     NavigateToOption,
+    ButtonPressed(u32),
     Exit,
     SetRole(Role),
     SetPin(String),
@@ -23,5 +24,7 @@ pub enum Message {
     CANDY,
     AQUA,
     DEFAULT,
-    SNIPER,
+
+    COFFEE,
+    PRINCESS
 }

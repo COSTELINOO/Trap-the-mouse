@@ -3,6 +3,8 @@ use iced::{
     widget::canvas::{self, Canvas, Frame, Geometry, Path},
      Element, Length, Point, Rectangle, Renderer, Size,Task
 };
+
+use iced::advanced;
 use iced::{  Theme,Border,Shadow};
 use iced::Color;
 use iced::Background;
@@ -11,7 +13,7 @@ use iced::widget::button::Style;
 use iced::border::Radius;
 use std::sync::Arc;
 use iced::widget::button::Status;
-use iced::widget::{button, container, Button};
+use iced::widget::{button, container, text_input, Button};
 use iced::widget::text::Catalog;
 use iced::widget::text_input::Cursor;
 #[derive(Debug, Clone)]
@@ -30,6 +32,7 @@ pub struct ShapeCollection {
 
 
 impl ShapeCollection {
+
     // Modificam constructorul pentru a accepta doar un tip de forma
     pub fn new(shape: ShapeType) -> Self {
         ShapeCollection {
@@ -44,6 +47,27 @@ impl ShapeCollection {
             .height(Length::Fill)
             .into()
     }
+    fn mouse_interaction(
+        &self,
+        _tree: &iced::advanced::widget::Tree,
+        layout: iced::advanced::Layout<'_>,
+        cursor: iced::mouse::Cursor,
+        _viewport: &Rectangle,
+        _renderer: &Renderer,
+    ) -> iced::mouse::Interaction {
+        // Obține coordonatele cursorului
+        if let Some(cursor_position) = cursor.position() {
+            // Verifică dacă cursorul este deasupra butonului
+            if layout.bounds().contains(cursor_position) {
+                iced::mouse::Interaction::Pointer // Pointer indică că utilizatorul poate interacționa
+            } else {
+                iced::mouse::Interaction::Idle // Idle pentru starea implicită
+            }
+        } else {
+            iced::mouse::Interaction::Idle // Idle dacă poziția cursorului este necunoscută
+        }
+    }
+
 }
 
 impl<Message> canvas::Program<Message> for ShapeCollection {
@@ -80,6 +104,30 @@ impl<Message> canvas::Program<Message> for ShapeCollection {
 
         vec![geometry]
     }
+
+    fn mouse_interaction(
+        &self,
+        _state: &Self::State,
+        layout: iced::Rectangle,
+        cursor: iced::mouse::Cursor,
+    ) -> iced::mouse::Interaction {
+        if let Some(cursor_position) = cursor.position() {
+            // Verifică dacă cursorul este deasupra formei
+            if cursor_position.x >= layout.x
+                && cursor_position.x <= layout.x + layout.width
+                && cursor_position.y >= layout.y
+                && cursor_position.y <= layout.y + layout.height
+            {
+                iced::mouse::Interaction::Pointer // Cursorul este deasupra formei
+            } else {
+                iced::mouse::Interaction::Idle // Cursorul nu este deasupra formei
+            }
+        } else {
+            iced::mouse::Interaction::Idle // Dacă nu se știe poziția cursorului
+        }
+    }
+
+
 }
 
 fn create_hexagon(x: f32, y: f32, size: f32) -> Path {
@@ -142,13 +190,14 @@ pub fn set_tema(index: u32,set_tema : & mut Tema )
         //EMERALD
         1 =>set_tema.COLORS= ["0233336".to_string(), "4da674".to_string(), "c1e6ba".to_string(), "eaf8e7".to_string()],
         //CANDY
-        2 =>set_tema.COLORS= ["f6e8df".to_string(),"3e3c6e".to_string(), "fe979b".to_string(), "feae97".to_string()],
+        2 =>set_tema.COLORS= [ "4233736".to_string(),"987185".to_string(), "d6aa9f".to_string(),"f4e2d1".to_string()],
         //AQUA
-        3 =>set_tema.COLORS= ["50adbf".to_string(),"193841".to_string(), "5d1c34".to_string(),"2171b5".to_string()],
+        3 =>set_tema.COLORS= [ "112032".to_string(),"3e4d5f".to_string(), "aab7b7".to_string(),"c0c8ca".to_string()],
         //DEFAULT
-        4 =>set_tema.COLORS= ["1b1b1b".to_string(),"77abb6".to_string(), "f1ac20".to_string(),"023336".to_string()],
-        //Sniper
-        _ =>set_tema.COLORS= ["5d1c34".to_string(),"48a0a3".to_string(), "9cbbfc".to_string(),"d9eff7".to_string()],
+        4 =>set_tema.COLORS= [ "2a3517".to_string(),"8f9c77".to_string(), "cfe1b9".to_string(),"e7f5dc".to_string()],
+        //Coffee
+        5=> set_tema.COLORS=["291c0e".to_string(),"6e473b".to_string(), "a78d78".to_string(),"beb5a9".to_string()],
+        _ =>set_tema.COLORS= ["4c1d3d".to_string(),"dc586d".to_string(), "fb9590".to_string(),"dcbcaa".to_string()],
     }
 }
 
@@ -157,14 +206,184 @@ pub fn culori(index: usize, tema: &Tema) -> Color {
     let hex = tema.COLORS.get(index).unwrap_or(&fallback); // Folosim `.get` pentru a obține elementul la index
     Color::parse(hex).unwrap_or(Color::BLACK) // Folosim negru daca parsing-ul eșueaza
 }
-pub fn button_style(theme: &Theme, status: Status,tema: &Tema) -> Style {
+pub fn button_style(theme: &Theme, status: Status,tema: &Tema,culoare: Color) -> Style {
+    match theme
+    {
+        Theme::Light
+        => {
+            match status {
+                Status::Active => Style {
+                    background: Some(Background::Color(culori(1, tema))), // alb
+                    text_color: culori(0, tema),                         // negru
+                    border: Border {
+                        color: culori(0, tema), // negru
+                        width: 2.0,
+                        radius: Radius::new(5.0),
+                    },
+                    shadow: Shadow {
+                        offset: iced::Vector::new(0.0, 2.0),
+                        blur_radius: 3.0,
+                        color: Color::from_rgba(0.0, 0.0, 0.0, 0.3),
+                    },
+                },
+                Status::Hovered => Style {
+                    background: Some(Background::Color(culori(2, tema))), // alb
+                    text_color: culori(0, tema),                         // negru
+                    border: Border {
+                        color: culori(1, tema), // negru
+                        width: 2.0,
+                        radius: Radius::new(5.0),
+                    },
+                    shadow: Shadow {
+                        offset: iced::Vector::new(0.0, 4.0),
+                        blur_radius: 4.0,
+                        color: Color::from_rgba(0.0, 0.0, 0.0, 0.4),
+                    },
+                },
+                Status::Pressed => Style {
+                    background: Some(Background::Color(culori(1, tema))), // alb
+                    text_color: culori(0, tema),                         // negru
+                    border: Border {
+                        color: culori(0, tema), // negru
+                        width: 2.0,
+                        radius: Radius::new(5.0),
+                    },
+                    shadow: Shadow {
+                        offset: iced::Vector::new(0.0, 2.0),
+                        blur_radius: 2.0,
+                        color: Color::from_rgba(0.0, 0.0, 0.0, 0.3),
+                    },
+                },
+                Status::Disabled => Style {
+                    background: Some(Background::Color(culori(1, tema))), // alb
+                    text_color: culori(5, tema),                         // negru
+                    border: Border {
+                        color: culori(0, tema), // negru
+                        width: 2.0,
+                        radius: Radius::new(5.0),
+                    },
+                    shadow: Shadow {
+                        offset: iced::Vector::new(0.0, 0.0),
+                        blur_radius: 0.0,
+                        color: Color::TRANSPARENT,
+                    },
+                },
+            }
+        },
 
-      match status {
-            Status::Active => Style {
-                background: Some(Background::Color(culori(1,tema))), // alb
-                text_color: culori(0,tema),                         // negru
+        Theme::Dracula =>
+            {
+                Style {
+                    background: Some(Background::Color(culori(2, tema))), // alb
+                    text_color: culori(0, tema),                         // negru
+                    border: Border {
+                        color: culori(1, tema), // negru
+                        width: 2.0,
+                        radius: Radius::new(5.0),
+                    },
+                    shadow: Shadow {
+                        offset: iced::Vector::new(0.0, 4.0),
+                        blur_radius: 4.0,
+                        color: Color::from_rgba(0.0, 0.0, 0.0, 0.4),
+                    },
+
+                }
+            },
+        Theme::Ferra =>
+            {
+                match status {
+                    Status::Active => Style {
+                        background: Some(Background::Color(Color::WHITE)), // alb
+                        text_color:Color::parse("11100f").unwrap(),                         // negru
+                        border: Border {
+                            color: Color::parse("11100f").unwrap(), // negru
+                            width: 2.0,
+                            radius: Radius::new(5.0),
+                        },
+                        shadow: Shadow {
+                            offset: iced::Vector::new(0.0, 2.0),
+                            blur_radius: 3.0,
+                            color: Color::from_rgba(0.0, 0.0, 0.0, 0.3),
+                        },
+                    },
+                    Status::Hovered => Style {
+                        background: Some(Background::Color(culori(2, tema))), // alb
+                        text_color: culori(0, tema),                         // negru
+                        border: Border {
+                            color: culori(1, tema), // negru
+                            width: 2.0,
+                            radius: Radius::new(5.0),
+                        },
+                        shadow: Shadow {
+                            offset: iced::Vector::new(0.0, 4.0),
+                            blur_radius: 4.0,
+                            color: Color::from_rgba(0.0, 0.0, 0.0, 0.4),
+                        },
+                    },
+                    Status::Pressed => Style {
+                        background: Some(Background::Color(culori(1, tema))), // alb
+                        text_color: culori(0, tema),                         // negru
+                        border: Border {
+                            color: culori(0, tema), // negru
+                            width: 2.0,
+                            radius: Radius::new(5.0),
+                        },
+                        shadow: Shadow {
+                            offset: iced::Vector::new(0.0, 2.0),
+                            blur_radius: 2.0,
+                            color: Color::from_rgba(0.0, 0.0, 0.0, 0.3),
+                        },
+                    },
+                    Status::Disabled => Style {
+                        background: Some(Background::Color(culori(1, tema))), // alb
+                        text_color: culori(5, tema),                         // negru
+                        border: Border {
+                            color: culori(0, tema), // negru
+                            width: 2.0,
+                            radius: Radius::new(5.0),
+                        },
+                        shadow: Shadow {
+                            offset: iced::Vector::new(0.0, 0.0),
+                            blur_radius: 0.0,
+                            color: Color::TRANSPARENT,
+                        },
+                    },
+                }
+
+
+    },
+        _ =>
+            {
+                Style {
+                    background: Some(Background::Color(culoare)), // alb
+                    text_color: culori(0, tema),                         // negru
+                    border: Border {
+                        color: (culoare), // negru
+                        width: 5.0,
+                        radius: Radius::new(50.0),
+                    },
+                    shadow: Shadow {
+                        offset: iced::Vector::new(0.0, 0.0),
+                        blur_radius: 0.0,
+                        color: Color::TRANSPARENT,
+                    }
+                }
+            }
+    }
+}
+
+
+
+pub fn container_style(theme: &Theme, status: Status, tema: &Tema, culoare: Color) -> container::Style {
+    match theme
+    {
+        Theme::Light
+        => match status {
+            Status::Active => container::Style {
+                background: Some(Background::Color(culori(1, tema))), // alb
+                text_color: Some(culori(0, tema)),                         // negru
                 border: Border {
-                    color: culori(0,tema), // negru
+                    color: culori(0, tema), // negru
                     width: 2.0,
                     radius: Radius::new(5.0),
                 },
@@ -174,11 +393,11 @@ pub fn button_style(theme: &Theme, status: Status,tema: &Tema) -> Style {
                     color: Color::from_rgba(0.0, 0.0, 0.0, 0.3),
                 },
             },
-            Status::Hovered => Style {
-                background: Some(Background::Color(culori(2,tema))), // alb
-                text_color: culori(0,tema),                         // negru
+            Status::Hovered => container::Style {
+                background: Some(Background::Color(culori(2, tema))), // alb
+                text_color: Some(culori(0, tema)),                         // negru
                 border: Border {
-                    color: culori(1,tema), // negru
+                    color: culori(1, tema), // negru
                     width: 2.0,
                     radius: Radius::new(5.0),
                 },
@@ -188,11 +407,11 @@ pub fn button_style(theme: &Theme, status: Status,tema: &Tema) -> Style {
                     color: Color::from_rgba(0.0, 0.0, 0.0, 0.4),
                 },
             },
-            Status::Pressed => Style {
-                background: Some(Background::Color(culori(1,tema))), // alb
-                text_color: culori(0,tema),                         // negru
+            _ => container::Style {
+                background: Some(Background::Color(culori(1, tema))), // alb
+                text_color: Some(culori(0, tema)),                         // negru
                 border: Border {
-                    color: culori(0,tema), // negru
+                    color: culori(0, tema), // negru
                     width: 2.0,
                     radius: Radius::new(5.0),
                 },
@@ -202,19 +421,92 @@ pub fn button_style(theme: &Theme, status: Status,tema: &Tema) -> Style {
                     color: Color::from_rgba(0.0, 0.0, 0.0, 0.3),
                 },
             },
-            Status::Disabled => Style {
-                background: Some(Background::Color(culori(1,tema))), // alb
-                text_color: culori(5,tema),                         // negru
+
+
+        }
+
+        _ =>
+            {
+                container::Style {
+                    background: Some(Background::Color(culoare)), // alb
+                    text_color: Some(culori(0, tema)),                         // negru
+                    border: Border {
+                        color: (culoare), // negru
+                        width: 5.0,
+                        radius: Radius::new(50.0),
+                    },
+                    shadow: Shadow {
+                        offset: iced::Vector::new(0.0, 0.0),
+                        blur_radius: 0.0,
+                        color: Color::TRANSPARENT,
+                    }
+                }
+            }
+    }
+}
+
+pub fn text_input_style(theme: &Theme, status: text_input::Status, tema: &Tema, culoare: Color) -> text_input::Style {
+    match theme
+    {
+        Theme::Light
+        => match status {
+            text_input::Status::Active => text_input::Style {
+                background: Background::Color(culori(1, tema)), // alb
+                                   // negru
                 border: Border {
-                    color: culori(0,tema), // negru
+                    color: culori(0, tema), // negru
                     width: 2.0,
                     radius: Radius::new(5.0),
                 },
-                shadow: Shadow {
-                    offset: iced::Vector::new(0.0, 0.0),
-                    blur_radius: 0.0,
-                    color: Color::TRANSPARENT,
-                },
+                 icon: Color::TRANSPARENT,
+                 placeholder: (culori(0, tema)),
+                 value: (culori(0, tema)),
+                 selection: (culori(2, tema)),
             },
+            text_input::Status::Focused {is_hovered:_} => text_input::Style {
+                background: Background::Color(culori(2, tema)), // alb
+                                        // negru
+                border: Border {
+                    color: culori(1, tema), // negru
+                    width: 2.0,
+                    radius: Radius::new(5.0),
+                },
+                icon: Color::TRANSPARENT,
+                placeholder: (culori(0, tema)),
+                value: (culori(0, tema)),
+                selection: (culori(3, tema)),
+            },
+            _ => text_input::Style {
+                background: (Background::Color(culori(1, tema))), // alb negru
+                border: Border {
+                    color: culori(0, tema), // negru
+                    width: 2.0,
+                    radius: Radius::new(5.0),
+                },
+                icon: Color::TRANSPARENT,
+                placeholder: (culori(0, tema)),
+                value: (culori(0, tema)),
+                selection: (culori(0, tema)),
+            },
+
+
         }
+
+        _ =>
+            {
+                text_input::Style {
+                    background: (Background::Color(culoare)), // alb
+                    // negru
+                    border: Border {
+                        color: (culoare), // negru
+                        width: 5.0,
+                        radius: Radius::new(50.0),
+                    },
+                    icon: Color::TRANSPARENT,
+                    placeholder: (culori(0, tema)),
+                    value: (culori(0, tema)),
+                    selection: (culori(0, tema)),
+                }
+            }
+    }
 }
