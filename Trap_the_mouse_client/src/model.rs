@@ -1,6 +1,7 @@
 #[derive(Debug,Clone)]
 
 // Definirea paginilor
+#[derive(PartialEq)]
 pub enum Page {
     Menu,
     SinglePlayer,
@@ -22,6 +23,7 @@ pub enum Role {
 pub struct Model {
    pub  current_page: Page,
    pub  role: Option<Role>,
+    pub current_move:Option<Role>,
    pub pin: Option<String>,  // PIN-ul introdus sau generat
 
 }

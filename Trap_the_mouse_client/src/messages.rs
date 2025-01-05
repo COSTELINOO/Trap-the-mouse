@@ -26,5 +26,10 @@ pub enum Message {
     DEFAULT,
 
     COFFEE,
-    PRINCESS
+    PRINCESS,
+    Received(String),
+    SendMessage(String),
+    SendCommand(String),
+ReceiveResponse,
+    ServerResponse(Option<String>),
 }

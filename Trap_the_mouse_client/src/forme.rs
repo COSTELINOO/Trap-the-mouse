@@ -360,7 +360,7 @@ pub fn button_style(theme: &Theme, status: Status,tema: &Tema,culoare: Color) ->
                     border: Border {
                         color: (culoare), // negru
                         width: 5.0,
-                        radius: Radius::new(50.0),
+                        radius: Radius::new(5.0),
                     },
                     shadow: Shadow {
                         offset: iced::Vector::new(0.0, 0.0),
