@@ -1,190 +1,391 @@
-use rand::Rng;
-use std::collections::VecDeque;
-use std::io;
+use rand_chacha::ChaChaRng;
+use rand::{Rng, SeedableRng};
+use tokio::net::{TcpListener, TcpStream};
+use tokio::sync::{Notify, mpsc};
+mod drum;
+use tokio::sync::{Mutex, RwLock};
+use std::sync::Arc;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use std::collections::HashMap;
 
-fn initializare_tabla() ->Vec<Vec<i32>> {
-    vec![vec![ 0; 11]; 11]
-}
-fn adaugare_obstacole(tabla: &mut Vec<Vec<i32>>,nr_obstacole:i32)
-{
-    let mut rng = rand::thread_rng();
-    let mut cnt=1;
-    let mut random;
-    while cnt<=nr_obstacole
-    {
-       random=rng.gen_range(1..=121);
-
-        tabla[random/11 ][random % 11]=1;
-
-        cnt+=1;
-    }
+#[derive(Clone)]
+struct Room {
+    pin: String,
+    clients: Vec<Arc<Mutex<TcpStream>>>, // Fiecare client este protejat de un Mutex
+    hunter_first: bool,
+    notify: Arc<Notify>,
 }
 
-fn bfs(tabla: &Vec<Vec<i32>>, start: (usize, usize)) -> (Vec<Vec<i32>>, Vec<Vec<Option<(usize, usize)>>>, Vec<(usize, usize)>) {
-    let n = tabla.len();
-    let m = tabla[0].len();
-    let mut distanta = vec![vec![-1; m]; n];
-    let mut parent = vec![vec![None; m]; n];
-    let mut queue = VecDeque::new();
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let listener = TcpListener::bind("127.0.0.1:9090").await?;
+    let mut rooms = (HashMap::new()); // Camerele sunt doar într-un HashMap
 
-    queue.push_back(start);
-    distanta[start.0][start.1] = 0;
+    println!("Server started on 127.0.0.1:9090");
+
+    loop {
+        let (socket, _) = listener.accept().await?;
+        // let mut rooms = Arc::clone(& mut rooms);
 
 
-    let dir_pare = vec![(-1, -1), (-1, 0), (0, -1), (0, 1), (1, -1), (1, 0)];
-    let dir_impare = vec![(-1, 0), (-1, 1), (0, -1), (0, 1), (1, 0), (0, 1)];
+        let socket = Arc::new(Mutex::new(socket));
+        let mut buffer = [0; 1024];
 
-    while let Some((x, y)) = queue.pop_front() {
-        let directions = if x % 2 == 0 { &dir_pare } else { &dir_impare };
 
-        for (dx, dy) in directions.iter() {
-            let nx = (x as isize + dx) as usize;
-            let ny = (y as isize + dy) as usize;
-            if nx < n && ny < m && tabla[nx][ny] == 0 && distanta[nx][ny] == -1 {
-                distanta[nx][ny] = distanta[x][y] + 1;
-                parent[nx][ny] = Some((x, y));
-                queue.push_back((nx, ny));
+        let n = socket.lock().await.read(&mut buffer).await?;
+
+        if n == 0 {
+            println!("Client disconnected.");
+        }
+
+        let input = String::from_utf8_lossy(&buffer[..n]).to_string();
+        let mut commands = input.split_whitespace();
+        let command = commands.next();
+
+        match command {
+            Some("create") => {
+                if let (Some(pin), Some(role)) = (commands.next(), commands.next()) {
+                    println!("Create command received. Pin: {}, Role: {}", pin, role);
+                    let hunter_first = role.to_uppercase() == "HUNTER";
+
+                    // Creăm o cameră nouă
+                    let mut room = Room {
+                        pin: pin.to_string(),
+                        clients: vec![socket.clone()],
+                        hunter_first,
+                        notify: Arc::new(Notify::new()),
+                    };
+
+                    // Adăugăm camera în hash map
+                    if rooms.contains_key(pin) {
+                        println!("Room with pin {} already exists.", pin);
+                        let mut locked_socket = socket.lock().await;
+                        locked_socket.write_all(b"Room already exists\n").await.unwrap();
+                    }
+                    else{
+
+
+                        tokio::spawn(async move {
+                            print_socket(socket.clone(), "READY\n").await;
+                        });
+
+                        rooms.insert(pin.to_string(), room.clone());
+                        println!("Room created with pin: {}", pin);
+                        println!("Created room with pin: {}", rooms.get(pin.clone()).unwrap().clients.len());
+                    }
+
+
+
+                    // Trimitem mesajul clientului că a fost creat
+                    //   let mut locked_socket = socket.lock().await;
+                    // locked_socket.write_all(b"HUNTER\n").await.unwrap();
+                    // locked_socket.write_all(b"CONTINUA\n").await.unwrap();
+                } else {
+                    println!("Invalid create command format: {}", input);
+                }
             }
-        }
+
+            Some("join") => {
+                println!("Join command received.");
+                if let Some(pin) = commands.next() {
+                    println!("Join command received. Pin: {}", pin);
+                    if let Some(mut room) = rooms.get_mut(pin) {
+                        room.clients.push(socket.clone());
+
+                        println!(
+                            "Client joined room: {}. Total clients: {}",
+                            pin,
+                            room.clients.len()
+                        );
+
+                        if room.clients.len() == 2 {
+                            println!("Both clients joined. Assigning roles.");
+                            tokio::spawn(async move {
+                                print_socket(socket.clone(), "READY\n").await;
+                            });
+
+
+                            let role_message_1 = if room.hunter_first { "HUNTER\n" } else { "MOUSE\n" };
+                            let role_message_2 = if room.hunter_first { "MOUSE\n" } else { "HUNTER\n" };
+
+                            for(index, client) in room.clients.iter_mut().enumerate() {
+                                let mut locked_client = client.lock().await;
+                                let role_message = if index == 0 { role_message_1 } else { role_message_2 };
+                                locked_client.write_all(role_message.as_bytes()).await.unwrap();
+
+
+
+                            }
+                            let pin_clone = pin.clone(); // Clonează pin-ul pentru a-l folosi în task
+                            let room_clone = room.clone(); // Clonează referința la camera curentă
+
+                            tokio::spawn(async move {
+                                start_game(room_clone).await ;
+                            });
+
+                            // Ștergerea camerei din hash map după ce jocul s-a terminat
+                            if let Some(_) = rooms.remove(pin_clone) {
+                                println!("Room-ul cu pin-ul {} a fost șters.", pin_clone);
+                            } else {
+                                println!("Room-ul cu pin-ul {} nu a fost găsit pentru ștergere.", pin_clone);
+                            }
+
+
+                            if rooms.remove(pin_clone).is_some() {
+                                println!("Room-ul cu pin-ul {} a fost șters.", pin_clone);
+                            } else {
+                                println!("Room-ul cu pin-ul {} nu a fost găsit pentru ștergere.", pin_clone);
+                            }
+
+                        } else {
+                            println!("Waiting for another client to join room: {}", pin);
+                        }
+                    } else {
+                        println!("Room with pin {} not found.", pin);
+                        let mut locked_socket = socket.lock().await;
+                        locked_socket.write_all(b"Room not found\n").await.unwrap();
+                    }
+                } else {
+                    println!("Invalid join command format: {}", input);
+                }
+            }
+
+            Some("computer") => {
+
+                println!("Starting computer mode");
+
+                // Începem modul computerizat, respectiv jocul împotriva botului
+                let client = Arc::clone(&socket);
+                tokio::spawn(start_computer_mode(client));
+
+
+
+            }
+
+            _ => {
+                println!("Unknown command: {}", input);
+            }
+        }}}
+
+
+
+
+
+
+
+async fn print_to_room(room: Room, message: &str) {
+
+    let aux=room.clone();
+    for client in aux.clients.clone(){
+
+        let mut locked_client = client.lock().await;
+
+        locked_client.write_all(message.as_bytes()).await.unwrap();
+
     }
-
-
-    let mut margini = Vec::new();
-    for i in 0..11 {
-        if i != 0 && i != 10 {
-            margini.push((i, 0));
-            margini.push((i, 10));
-        }
-    }
-
-    for j in 0..11 {
-        if j != 0 && j != 10 {
-            margini.push((0, j));
-            margini.push((10, j));
-        }
-    }
-
-
-    let mut distanta_minima = i32::MAX;
-    for &dest in margini.iter() {
-        if distanta[dest.0][dest.1] != -1 {
-            distanta_minima = distanta_minima.min(distanta[dest.0][dest.1]);
-        }
-    }
-
-    let mut destinatii_minime = Vec::new();
-    for &dest in margini.iter() {
-        if distanta[dest.0][dest.1] == distanta_minima {
-            destinatii_minime.push(dest);
-        }
-    }
-
-    (distanta, parent, destinatii_minime)
 }
+async fn start_game(room: Room) {
+    println!("Starting game in room: {}", room.pin);
 
 
-fn reconstruire_drum(parent: &Vec<Vec<Option<(usize, usize)>>>, dest: (usize, usize)) -> Vec<(usize, usize)> {
-    let mut drum = Vec::new();
-    let mut curent = Some(dest);
+    let mut matrix = [[0i8; 11]; 11];
+    let mut turn = if room.hunter_first { 0 } else { 1 };
+    println!("Starting game in room: {}", room.hunter_first);
+    let first=turn;
 
-    while let Some((x, y)) = curent {
-        drum.push((x, y));
-        curent = parent[x][y];
-    }
+    let mut rng = rand_chacha::ChaChaRng::from_entropy();
+    let random = rng.gen_range(30..=60);
 
-    drum.reverse();
-    drum
-}
-
-fn afiseaza_matricea(matrice: &Vec<Vec<i32>>) {
-    for row in matrice.iter() {
-        for &val in row.iter() {
-            print!("{} ", val);
-        }
-        println!();
-
-    }
-    println!();
-}
-fn main() {
-    let mut tabla = vec![vec![0; 11]; 11];
-    adaugare_obstacole(&mut tabla, 18);
-    tabla[5][5] = -1;
-
-    afiseaza_matricea(&tabla);
-
+    drum::adaugare_obstacole(&mut matrix, random);
+    matrix[5][5] = -1;
     let mut start = (5, 5);
-    let mut nr_mutari = 0;
 
+    // Trimiterea stării matricei către toți clienții
+
+    let mesaj=["CONTINUA\n","DECONECTAT\n","HUNTER WIN\n","MOUSE WIN\n"];
+    let mut cnt=0;
     loop {
 
 
-        println!("\nIntroduceti coordonatele pentru a adauga un obstacol (x y): ");
-        let mut input = String::new();
-        io::stdin().read_line(&mut input).unwrap();
-        let coords: Vec<usize> = input
-            .trim()
-            .split_whitespace()
-            .map(|x| x.parse().unwrap())
-            .collect();
+        let matrix_state = format!("{:?}\n", matrix);
+        print_to_room(room.clone(),mesaj[cnt]).await;
+        print_to_room(room.clone(),matrix_state.as_str()).await;
 
-        if coords.len() == 2 {
-            let (x, y) = (coords[0], coords[1]);
-            if x < 11 && y < 11 && tabla[x][y] == 0 {
-                tabla[x][y] = 1;
+        if cnt>=1
+        {
+            return;
+        }
+
+        if turn==first
+        {
+            print_to_room(room.clone(),"HUNTER\n").await;
+        }
+        else {
+            print_to_room(room.clone(),"MOUSE\n").await;
+        }
+
+
+        let current_client = &room.clients[turn];
+
+        let mut move_buffer = [0; 1024];
+        let mut locked_client = current_client.lock().await;
+
+
+        let n = match locked_client.read(&mut move_buffer).await {
+            Ok(n) => n,
+            Err(_) => {
+                println!("Eroare la citirea de la client.");
+                return;
             }
-        }
+        };
+        let player_move = String::from_utf8_lossy(&move_buffer[..n]).trim().to_string();
+        if n == 0 {
+            cnt=1;
 
-        nr_mutari += 1;
-
-
-        println!("\nMai doriti sa continuati? (da/nu): ");
-        let mut continuare = String::new();
-        io::stdin().read_line(&mut continuare).unwrap();
-        if continuare.trim() == "nu" {
-            break;
         }
 
 
-        if (start.0 == 0 || start.0 == 10 || start.1 == 0 || start.1 == 10) && tabla[start.0][start.1] == -1 {
-            println!("GAME OVER");
-            break;
+        if player_move == "iesire" {
+            cnt=1;
+
+
         }
-
-        println!("\nMutarea #{}", nr_mutari);
-
-        let (distanta, parent, destinatii_minime) = bfs(&tabla, start);
+        else{
+            println!("Clientul {} a făcut mișcarea: {}", turn + 1, player_move);
 
 
-        let mut minim = i32::MAX;
-        let mut drum_minim = Vec::new();
+            let mut number=player_move.parse::<usize>().unwrap();
 
-        for &dest in destinatii_minime.iter() {
-            let drum = reconstruire_drum(&parent, dest);
-            if drum.len() < minim as usize {
-                minim = drum.len() as i32;
-                drum_minim = drum;
+            println!("Number: {}", number);
+            if turn==first {
+                println!("Number hunter: {}", number);
+                let x = (number - 1) / 11;
+                let y = (number - 1) % 11;
+                matrix[x][y] = 1;
+
+                let (distanta, parent, destinatii_minime) = drum::bfs(&matrix, start);
+                let mut drum_minim = Vec::new();
+
+                for &dest in destinatii_minime.iter() {
+                    let drum = drum::reconstruire_drum(&parent, dest);
+                    if drum.len() < drum_minim.len() || drum_minim.is_empty() {
+                        drum_minim = drum;
+                    }
+                }
+
+                if drum_minim.is_empty() {
+                    cnt=2;
+                }
             }
-        }
+            else {
+                println!("Number Mouse: {}", number);
+                let x = (number - 1) / 11;
+                let y = (number - 1) % 11;
+                println!("{:?}",start);
+                println!("{} {}",x,y);
+                matrix[start.0][start.1] = 0;
+                matrix[x][y] = -1;
+                println!("{}",matrix[x][y]);
+                start.0=x;
+                start.1=y;
+
+                println!("{:?}",start);
+
+                if (start.0 == 0 || start.0 == 10 || start.1 == 0 || start.1 == 10)
+                    && matrix[start.0][start.1] == -1
+                {
+                    cnt=3;
+                }
 
 
-        if !drum_minim.is_empty() {
-            println!("\nCel mai scurt drum de la ({}, {}) la margine (distanta minimă = {}):", start.0, start.1, minim);
-            for (x, y) in drum_minim.iter() {
-                print!("({},{}) ", x, y);
             }
-            println!();
+
+
+            turn = (turn + 1) % 2;
+        }}
+}
+
+async fn print_socket(client: Arc<Mutex<TcpStream>>,message: &str)
+{
+    let mut locked_client = client.lock().await;
+    locked_client.write_all(message.as_bytes()).await.unwrap();
+}
+async fn start_computer_mode(client: Arc<Mutex<TcpStream>>) {
+    let mut matrix = [[0; 11]; 11];
+    let mut rng = rand_chacha::ChaChaRng::from_entropy();
+    let random = rng.gen_range(30..=60);
+    drum::adaugare_obstacole(&mut matrix, random);
+    matrix[5][5] = -1;
+    let mut start = (5, 5);
+    let mesaj=["CONTINUA\n","HUNTER WIN\n","MOUSE WIN\n"];
+    let mut cnt=0;
+    let mut matrix_state = format!("{:?}\n", matrix);
+
+    loop {
+        print_socket(client.clone(),mesaj[cnt]).await;
+        matrix_state = format!("{:?}\n", matrix);
+        print_socket(client.clone(),matrix_state.as_str()).await;
+        let mut buffer = [0; 1024];
+        if cnt>0
+        {
+            return;
         }
 
+        let n = {
+            let mut locked_client = client.lock().await;
+            locked_client.read(&mut buffer).await.unwrap()
+        };
 
-        if !drum_minim.is_empty() {
-            let old_start = start;
-            start = drum_minim[1];
+        match n {
+            0 => {
+                println!("Client deconectat.");
+               return
+            }
+            _=> {
+                let input = String::from_utf8_lossy(&buffer[..n]).trim().to_string();
+                if input == "iesire" {
+                    let mut locked_client = client.lock().await;
+                    locked_client.write_all(b"EXIT\n").await.unwrap();
+                    return
+                }else {
+                    let number = input.parse::<usize>().unwrap();
+                    println!("Number: {}", number);
+                    let x = (number - 1) / 11;
+                    let y = (number - 1) % 11;
+                    println!("x: {}   y: {}", x,y);
+                    matrix[x][y] = 1;
+println!("{:?}",matrix);
+                    if (start.0 == 0 || start.0 == 10 || start.1 == 0 || start.1 == 10)
+                        && matrix[start.0][start.1] == -1
+                    {
+                       cnt=2;
+                    }
+else{
+                    let (distanta, parent, destinatii_minime) = drum::bfs(&matrix, start);
+                    let mut drum_minim = Vec::new();
+                    for &dest in destinatii_minime.iter() {
+                        let drum = drum::reconstruire_drum(&parent, dest);
+                        if drum.len() < drum_minim.len() || drum_minim.is_empty() {
+                            drum_minim = drum;
+                        }
+                    }
 
+                    if !drum_minim.is_empty() {
+                        let old_start = start;
+                        start = drum_minim[1];
+                        matrix[old_start.0][old_start.1] = 0;
+                        matrix[start.0][start.1] = -1;
+                    } else {
+                        if cnt!=2
+                        {
+                            cnt=1;
+                        }
 
-            tabla[old_start.0][old_start.1] = 0;
-            tabla[start.0][start.1] = -1;        
+                    }
+}
+
+                }
+            }
         }
     }
-    afiseaza_matricea(&tabla);
 }

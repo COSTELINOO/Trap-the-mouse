@@ -1,8 +1,11 @@
 [package]
-name = "Trap_the_mouse"
+name = "test_server"
 version = "0.1.0"
 edition = "2021"
 
+
 [dependencies]
+tokio = { version = "1.42.0", features = ["full"] }
+tokio-tungstenite = "0.26.1"
 rand = "0.8"
-iced = { version = "0.13.1", features = ["wgpu"] }
+rand_chacha = "0.3"
