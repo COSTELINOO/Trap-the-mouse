@@ -6,6 +6,5 @@ edition = "2021"
 
 [dependencies]
 tokio = { version = "1.42.0", features = ["full"] }
-tokio-tungstenite = "0.26.1"
 rand = "0.8"
 rand_chacha = "0.3"
