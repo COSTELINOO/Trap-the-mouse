@@ -1,3 +1,4 @@
+#![warn(unused_variables)]
 use crate::to_server;
 use crate::parser::*;
 use std::sync::Arc;
@@ -13,17 +14,17 @@ use tokio::sync::mpsc as tokio_mpsc;
 
 pub fn update(message: Message, app: &mut MyApp) -> Task<Message> {
     match message {
-        Message::EMERALD => set_tema(1, &mut app.tema),
+        Message::Emerald => set_tema(1, &mut app.tema),
 
-        Message::CANDY => set_tema(2, &mut app.tema),
+        Message::Candy => set_tema(2, &mut app.tema),
 
-        Message::AQUA => set_tema(3, &mut app.tema),
+        Message::Aqua => set_tema(3, &mut app.tema),
 
-        Message::DEFAULT => set_tema(4, &mut app.tema),
+        Message::Default => set_tema(4, &mut app.tema),
 
-        Message::COFFEE => set_tema(5, &mut app.tema),
+        Message::Coffee => set_tema(5, &mut app.tema),
 
-        Message::PRINCESS => set_tema(6, &mut app.tema),
+        Message::Princess => set_tema(6, &mut app.tema),
 
         Message::NavigateToMenu => {
             app.default();
@@ -36,9 +37,7 @@ pub fn update(message: Message, app: &mut MyApp) -> Task<Message> {
             let (server_tx, server_rx) = tokio_mpsc::channel(32);
 
             tokio::spawn(async move {
-                if let Err(_e) = to_server::tcp_handler(rx, server_tx).await {
-
-                }
+                if to_server::tcp_handler(rx, server_tx).await.is_err(){}
             });
 
             let receiver = Arc::new(Mutex::new(server_rx));
@@ -68,7 +67,7 @@ pub fn update(message: Message, app: &mut MyApp) -> Task<Message> {
         Message::Received(mesaj) => {
             parse_message(app, mesaj);
 
-            if app.ready_room == true
+            if app.ready_room
             {
                 app.model.go_to_game_board();
             }
@@ -97,9 +96,7 @@ pub fn update(message: Message, app: &mut MyApp) -> Task<Message> {
             let (server_tx, server_rx) = tokio_mpsc::channel(32);
 
             tokio::spawn(async move {
-                if let Err(e) = to_server::tcp_handler(rx, server_tx).await {
-                    eprintln!("Eroare în thread-ul TCP: {}", e);
-                }
+                if to_server::tcp_handler(rx, server_tx).await.is_err(){}
             });
 
             let receiver = Arc::new(Mutex::new(server_rx));
@@ -112,7 +109,7 @@ pub fn update(message: Message, app: &mut MyApp) -> Task<Message> {
             {
                 let mut aux = "create ".to_string();
                 if let Some(pin) = &app.model.pin {
-                    aux.push_str(&pin);
+                    aux.push_str(pin);
                 }
                 if let Some(role) = &app.model.role {
                     match role {
@@ -129,7 +126,7 @@ pub fn update(message: Message, app: &mut MyApp) -> Task<Message> {
                 let mut aux = "join ".to_string();
 
                 if let Some(pin) = &app.model.pin {
-                    aux.push_str(&pin);
+                    aux.push_str(pin);
                 }
 
                 if let Some(sender) = &app.sender {
@@ -137,7 +134,7 @@ pub fn update(message: Message, app: &mut MyApp) -> Task<Message> {
                 }
             }
 
-            if app.ready_room == true
+            if app.ready_room
             {
                 app.model.go_to_game_board();
             }
@@ -164,7 +161,7 @@ pub fn update(message: Message, app: &mut MyApp) -> Task<Message> {
         Message::SetPin(pin) => app.model.set_pin(pin),
 
         Message::Resize(size) => {
-            *&mut app.dimensions = (size.width as u32, size.height as u32);
+            app.dimensions = (size.width as u32, size.height as u32);
         }
 
         Message::ButtonPressed(numar) => {

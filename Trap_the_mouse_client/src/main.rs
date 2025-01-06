@@ -1,3 +1,5 @@
+#![warn(unused_variables)]
+
 mod model;
 mod update;
 mod view;
@@ -81,7 +83,7 @@ impl MyApp {
     }
 
     fn view(&self) -> iced::Element<'_, Message> {
-        view(&self)
+        view(self)
     }
 
     fn subscription(&self) -> Subscription<Message> {

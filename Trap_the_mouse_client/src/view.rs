@@ -1,3 +1,4 @@
+#![warn(unused_variables)]
 use iced::widget::button::Status;
 use iced::{widget::canvas::{Canvas}, Color, Length, Theme, Alignment::Start, Center};
 use iced::widget::{Column, Button, Stack, Container, Row, text_input};
@@ -246,7 +247,7 @@ fn view_single_player(app: &MyApp) -> Element<Message>
             .width(Length::from(100))
             .height(Length::from(50)));
 
-    if game_over == true {
+    if game_over  {
 
         let rectangle1 = drept_1_game_over(app);
         let rec_canvas1 = Canvas::new(rectangle1).width(Length::Fill).height(Length::Fill);
@@ -254,13 +255,13 @@ fn view_single_player(app: &MyApp) -> Element<Message>
         let rectangle2 = drept_2_game_over(app);
         let rec_canvas2 = Canvas::new(rectangle2).width(Length::Fill).height(Length::Fill);
 
-        let  text;
 
-        if winner == "HUNTER" {
-            text = Text::new(" GAME OVER\nHUNTER WIN").color(culori(0, &app.tema)).size(45).align_x(Center);
+
+        let text=  if winner == "HUNTER" {
+            Text::new(" GAME OVER\nHUNTER WIN").color(culori(0, &app.tema)).size(45).align_x(Center)
         } else {
-            text = Text::new(" GAME OVER\nMOUSE WIN").color(culori(0, &app.tema)).size(45).align_x(Center);
-        }
+            Text::new(" GAME OVER\nMOUSE WIN").color(culori(0, &app.tema)).size(45).align_x(Center)
+        };
 
         stacked_elements = stacked_elements
 
@@ -583,12 +584,10 @@ fn view_game_board(app: &MyApp) -> Element<Message> {
 
                 if let Some(rol) = app.model.clone().role
                 {
-                    let  cntt ;
-
-                    if i % 2 == 1
-                    { cntt = 1; } else {
-                        cntt = 0;
-                    }
+                    let  cntt:i32 =if i % 2 == 1
+                    {  1  } else {
+                         0
+                    };
 
                     if rol == Role::Mouse
                     {
@@ -661,7 +660,7 @@ fn view_game_board(app: &MyApp) -> Element<Message> {
             .height(Length::from(50)));
 
 
-    if game_over == true {
+    if game_over  {
 
         let rectangle1 =drept_1_game_over(app);
         let rec_canvas1 = Canvas::new(rectangle1).width(Length::Fill).height(Length::Fill);
@@ -727,37 +726,37 @@ fn view_option(app: &MyApp) -> Element<Message> {
         .push(Button::new(Text::new("Emerald").size(25.0).align_x(Center)
             .align_y(Center))
             .style(|_, status| button_style(&Theme::Light, status, &app.tema, Color::BLACK))
-            .on_press(Message::EMERALD)
+            .on_press(Message::Emerald)
             .width(Length::from(250))
             .height(Length::from(75)))
 
         .push(Button::new(Text::new("Candy").size(25.0).align_x(Center)
             .align_y(Center)).style(|_, status| button_style(&Theme::Light, status, &app.tema, Color::BLACK))
-            .on_press(Message::CANDY)
+            .on_press(Message::Candy)
             .width(Length::from(250))
             .height(Length::from(75)))
 
         .push(Button::new(Text::new("Aqua").size(25.0).align_x(Center)
             .align_y(Center)).style(|_, status| button_style(&Theme::Light, status, &app.tema, Color::BLACK))
-            .on_press(Message::AQUA)
+            .on_press(Message::Aqua)
             .width(Length::from(250))
             .height(Length::from(75)))
 
         .push(Button::new(Text::new("Default").size(25.0).align_x(Center)
             .align_y(Center)).style(|_, status| button_style(&Theme::Light, status, &app.tema, Color::BLACK))
-            .on_press(Message::DEFAULT)
+            .on_press(Message::Default)
             .width(Length::from(250))
             .height(Length::from(75)))
 
         .push(Button::new(Text::new("Coffee").size(25.0).align_x(Center)
             .align_y(Center)).style(|_, status| button_style(&Theme::Light, status, &app.tema, Color::BLACK))
-            .on_press(Message::COFFEE)
+            .on_press(Message::Coffee)
             .width(Length::from(250))
             .height(Length::from(75)))
 
         .push(Button::new(Text::new("Princess").size(25.0).align_x(Center)
             .align_y(Center)).style(|_, status| button_style(&Theme::Light, status, &app.tema, Color::BLACK))
-            .on_press(Message::PRINCESS)
+            .on_press(Message::Princess)
             .width(Length::from(250))
             .height(Length::from(75)));
 

@@ -1,3 +1,4 @@
+#![warn(unused_variables)]
 use iced::{
     widget::canvas::{self, Frame, Geometry, Path}, Point, Rectangle, Renderer, Size,
 };
@@ -34,11 +35,11 @@ impl<Message> canvas::Program<Message> for ShapeCollection {
 
     fn draw(
         &self,
-        _state: &Self::State,
+        _: &Self::State,
         viewport: &Renderer,
-        _cursor: &Theme,
+        _: &Theme,
         bounds: Rectangle,
-        _cursor_position: iced::mouse::Cursor,
+        _: iced::mouse::Cursor,
     ) -> Vec<Geometry> {
         let geometry = self.cache.draw(viewport, bounds.size(), |frame: &mut Frame| {
             match &self.shape {
@@ -60,7 +61,7 @@ impl<Message> canvas::Program<Message> for ShapeCollection {
 
     fn mouse_interaction(
         &self,
-        _state: &Self::State,
+        _: &Self::State,
         layout: Rectangle,
         cursor: iced::mouse::Cursor,
     ) -> iced::mouse::Interaction {

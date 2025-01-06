@@ -1,3 +1,5 @@
+#![warn(unused_variables)]
+
 use std::sync::{Arc};
 use tokio::sync::Mutex;
 use crate::{MyApp};

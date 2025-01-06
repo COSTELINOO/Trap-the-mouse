@@ -1,3 +1,4 @@
+#![warn(unused_variables)]
 use crate::model::{Role};
 
 #[derive(Debug, Clone)]
@@ -15,11 +16,11 @@ pub enum Message {
     SetPin(String),
     Resize(iced::Size),
     None,
-    EMERALD,
-    CANDY,
-    AQUA,
-    DEFAULT,
-    COFFEE,
-    PRINCESS,
+    Emerald,
+    Candy,
+    Aqua,
+    Default,
+    Coffee,
+    Princess,
     Received(String),
 }

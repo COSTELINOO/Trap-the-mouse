@@ -1,3 +1,4 @@
+#![warn(unused_variables)]
 use std::io::{BufRead, BufReader, Write};
 use std::net::TcpStream;
 use std::process::exit;
@@ -5,39 +6,34 @@ use std::error::Error;
 use tokio::sync::mpsc as tokio_mpsc;
 
 pub async fn tcp_handler(mut rx: tokio_mpsc::Receiver<String>, server_tx: tokio_mpsc::Sender<String>) -> Result<(), Box<dyn Error + Send + Sync>> {
+    if let Some(command) = rx.recv().await {
+        if command.starts_with("create") || command.starts_with("join") || command == "computer" {
+            let stream = TcpStream::connect("127.0.0.1:9090")?;
 
-    match rx.recv().await {
-        Some(command) => {
-            if command.starts_with("create") || command.starts_with("join") || command == "computer" {
-                let stream = TcpStream::connect("127.0.0.1:9090")?;
+            let mut reader = BufReader::new(stream.try_clone()?);
 
-                let mut reader = BufReader::new(stream.try_clone()?);
+            let mut writer = stream;
 
-                let mut writer = stream;
+            writeln!(writer, "{}", command)?;
 
-                writeln!(writer, "{}", command)?;
+            writer.flush()?;
 
-                writer.flush()?;
-
-                if command == "computer" {
-                    computer_mode(&mut reader, &mut writer, &mut rx, &server_tx).await?;
-                } else if command.starts_with("create") || command.starts_with("join") {
-                    create_or_join_mode(&mut reader, &mut rx, &mut writer, &server_tx).await?;
-                }
-            } else if command == "EXITT" {
-                exit(0);
+            if command == "computer" {
+                computer_mode(&mut reader, &mut writer, &mut rx, &server_tx).await?;
+            } else if command.starts_with("create") || command.starts_with("join") {
+                create_or_join_mode(&mut reader, &mut rx, &mut writer, &server_tx).await?;
             }
-        }
-        None => {
+        } else if command == "EXITT" {
+            exit(0);
         }
     }
+
 
     Ok(())
 }
 
 async fn computer_mode(reader: &mut BufReader<TcpStream>, writer: &mut TcpStream, rx: &mut tokio_mpsc::Receiver<String>, server_tx: &tokio_mpsc::Sender<String>) -> Result<(), Box<dyn Error + Send + Sync>>
 {
-
     loop {
         if let Some(status) = read_from_socket(reader).await? {
             match status.as_str() {
@@ -75,24 +71,17 @@ async fn computer_mode(reader: &mut BufReader<TcpStream>, writer: &mut TcpStream
                 _ => return Ok(())
             }
         } else {
-
             return Ok(());
         }
     }
 }
 
 async fn create_or_join_mode(reader: &mut BufReader<TcpStream>, rx: &mut tokio_mpsc::Receiver<String>, writer: &mut TcpStream, server_tx: &tokio_mpsc::Sender<String>) -> Result<(), Box<dyn Error + Send + Sync>> {
-
     if let Some(response) = read_from_socket(reader).await?
     {
-        match response.as_str() {
-            "READY" =>
-                {
-                    let aux: String = "READY".to_string();
-                    server_tx.send(aux).await?;
-                }
-
-            _ => {}
+        if response.as_str() == "READY" {
+            let aux: String = "READY".to_string();
+            server_tx.send(aux).await?;
         }
     }
 
@@ -122,11 +111,9 @@ async fn create_or_join_mode(reader: &mut BufReader<TcpStream>, rx: &mut tokio_m
             }
 
             "EXIT" => {
-
                 return Ok(());
             }
             _ => {
-
                 return Ok(());
             }
         }
@@ -287,10 +274,8 @@ async fn read_from_socket(reader: &mut BufReader<TcpStream>) -> Result<Option<St
 
     if n > 0 {
         return Ok(Some(buffer.trim().to_string()));
-    } else {
-        if reader.get_ref().peer_addr().is_err() {
-            return Ok(None);
-        }
+    } else if reader.get_ref().peer_addr().is_err() {
+        return Ok(None);
     }
 
     Ok(None)

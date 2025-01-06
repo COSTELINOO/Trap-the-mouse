@@ -1,3 +1,4 @@
+#![warn(unused_variables)]
 #[derive(Debug, Clone)]
 
 #[derive(PartialEq)]
