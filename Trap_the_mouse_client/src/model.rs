@@ -1,6 +1,5 @@
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 
-// Definirea paginilor
 #[derive(PartialEq)]
 pub enum Page {
     Menu,
@@ -12,7 +11,6 @@ pub enum Page {
     Option,
 }
 
-// Definirea sub-paginilor din TwoPlayers
 #[derive(Debug,Clone,PartialEq)]
 pub enum Role {
     Mouse,
@@ -24,12 +22,12 @@ pub struct Model {
    pub  current_page: Page,
    pub  role: Option<Role>,
     pub current_move:Option<Role>,
-   pub pin: Option<String>,  // PIN-ul introdus sau generat
+   pub pin: Option<String>,
 
 }
 
 impl Model {
-    // Modifica aceasta metoda pentru a fi publica
+
     pub fn go_to_menu(&mut self) {
         self.current_page = Page::Menu;
         self.role = None;

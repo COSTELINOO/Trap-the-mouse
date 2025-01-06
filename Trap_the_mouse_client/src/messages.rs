@@ -1,6 +1,5 @@
-use crate::model::{ Role};
-use iced::window::Event as WindowEvent;
-use iced::{executor, Application, Element, Settings, window,application};
+use crate::model::{Role};
+
 #[derive(Debug, Clone)]
 pub enum Message {
     NavigateToMenu,
@@ -14,22 +13,13 @@ pub enum Message {
     Exit,
     SetRole(Role),
     SetPin(String),
-  Resized(iced::Size),
     Resize(iced::Size),
-    EventOccurred(iced::Event),
     None,
-    GotDimensions(Option<iced::Size>),
-    NoDimensions,
     EMERALD,
     CANDY,
     AQUA,
     DEFAULT,
-
     COFFEE,
     PRINCESS,
     Received(String),
-    SendMessage(String),
-    SendCommand(String),
-ReceiveResponse,
-    ServerResponse(Option<String>),
 }
