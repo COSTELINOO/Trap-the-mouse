@@ -1,3 +1,4 @@
+#![warn(unused_variables)]
 mod drum;
 use rand::{Rng, SeedableRng};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -92,7 +93,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             for (index, client) in room.clients.iter_mut().enumerate() {
                                 let role_message = if index == 0 { role_message_1 } else { role_message_2 };
 
-                                print_socket(client.clone(), &role_message).await;
+                                print_socket(client.clone(), role_message).await;
                             }
 
                             let pin_clone = pin;
@@ -103,7 +104,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 start_game(room_clone).await;
                             });
 
-                            if let Some(_) = rooms.remove(pin_clone) {
+                            if rooms.remove(pin_clone).is_some() {
                                 println!("Room-ul cu pin-ul {} a fost scos din funnctiune pentru interaciuni.", pin_clone);
                             } else {
                                 println!("Room-ul cu pin-ul {} nu a fost găsit pentru ștergere.", pin_clone);
@@ -271,13 +272,11 @@ async fn print_socket(client: Arc<Mutex<TcpStream>>, message: &str)
 {
     let mut locked_client = client.lock().await;
 
-    match locked_client.write_all(message.as_bytes()).await
-    {
-        Err(e) => {
-            eprintln!("Eroare latrimiterea mesajului: \"{}\" catre client", e);
-        }
-        Ok(_) => {}
+
+    if let Err(e) = locked_client.write_all(message.as_bytes()).await {
+        eprintln!("Eroare latrimiterea mesajului: \"{}\" catre client", e);
     }
+
     ;
 }
 
@@ -369,11 +368,9 @@ async fn start_computer_mode(client: Arc<Mutex<TcpStream>>) {
                             matrix[old_start.0][old_start.1] = 0;
 
                             matrix[start.0][start.1] = -1;
-                        } else {
-                            if cnt != 2
-                            {
-                                cnt = 1;
-                            }
+                        } else if cnt != 2
+                        {
+                            cnt = 1;
                         }
                     }
                 }

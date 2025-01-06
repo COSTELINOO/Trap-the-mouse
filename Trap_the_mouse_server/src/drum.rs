@@ -1,7 +1,11 @@
+#![warn(unused_variables)]
 use rand::Rng;
 
 use std::collections::VecDeque;
 
+type Matrice = Vec<Vec<i32>>;
+type Parinti = Vec<Vec<Option<(usize, usize)>>>;
+type Coordonate = Vec<(usize, usize)>;
 
 pub fn adaugare_obstacole(tabla: &mut [[i8; 11]; 11], nr_obstacole: i32) {
     let mut rng = rand::thread_rng();
@@ -20,7 +24,7 @@ pub fn adaugare_obstacole(tabla: &mut [[i8; 11]; 11], nr_obstacole: i32) {
     }
 }
 
-pub fn bfs(tabla: &[[i8; 11]; 11], start: (usize, usize)) -> (Vec<Vec<i32>>, Vec<Vec<Option<(usize, usize)>>>, Vec<(usize, usize)>) {
+pub fn bfs(tabla: &[[i8; 11]; 11], start: (usize, usize)) -> (Matrice, Parinti, Coordonate)  {
     let n = tabla.len();
 
     let m = tabla[0].len();
@@ -93,7 +97,7 @@ pub fn bfs(tabla: &[[i8; 11]; 11], start: (usize, usize)) -> (Vec<Vec<i32>>, Vec
 }
 
 
-pub fn reconstruire_drum(parent: &Vec<Vec<Option<(usize, usize)>>>, dest: (usize, usize)) -> Vec<(usize, usize)> {
+pub fn reconstruire_drum(parent: &[Vec<Option<(usize, usize)>>], dest: (usize, usize)) -> Vec<(usize, usize)> {
     let mut drum = Vec::new();
 
     let mut curent = Some(dest);
