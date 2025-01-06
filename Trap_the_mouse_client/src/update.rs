@@ -36,8 +36,8 @@ pub fn update(message: Message, app: &mut MyApp) -> Task<Message> {
             let (server_tx, server_rx) = tokio_mpsc::channel(32);
 
             tokio::spawn(async move {
-                if let Err(e) = to_server::tcp_handler(rx, server_tx).await {
-                    eprintln!("Eroare în thread-ul TCP: {}", e);
+                if let Err(_e) = to_server::tcp_handler(rx, server_tx).await {
+
                 }
             });
 
