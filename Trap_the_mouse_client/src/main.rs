@@ -123,10 +123,10 @@ async fn main() -> iced::Result {
             visible: true,
             resizable: true,
             decorations: true,
-            transparent: false,
+            transparent: true,
             level: Level::default(),
             icon: Some(window::icon::from_file(app.0.get_locatie()).expect("Failed to load icon")),
             platform_specific: PlatformSpecific::default(),
-            exit_on_close_request: bool::default(),
+            exit_on_close_request: false,
         }).subscription(MyApp::subscription).run_with(|| app)
 }
