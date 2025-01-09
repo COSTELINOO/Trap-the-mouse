@@ -340,7 +340,7 @@ async fn start_computer_mode(client: Arc<Mutex<TcpStream>>) {
                     let x = (number - 1) / 11;
                     let y = (number - 1) % 11;
 
-                    println!("Mutare client: {}x{}", x, y);
+
 
                     matrix[x][y] = 1;
 
