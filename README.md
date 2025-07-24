@@ -34,6 +34,27 @@ Aplicațiile dezvoltate trebuie să respecte următoarele cerințe:
 
 ---
 
+## Build and Run
+Proiectul se poate compila și rula prin executarea scriptului `run.bat` (destinat pentru Windows).
+
+## Videoclip de prezentare
+[Link către videoclipul de prezentare a aplicației](https://drive.google.com/file/d/1NNHzOCsK_4RKgm1YyTm_BBqVB3vNrSy8/view?usp=drive_link)
+
+## Capturi de ecran
+<img width="1917" height="1017" alt="Screenshot 2025-07-24 143151" src="https://github.com/user-attachments/assets/835c5e25-d6ba-4303-b767-fdfe95d68343" />
+
+<img width="1907" height="1010" alt="Screenshot 2025-07-24 143217" src="https://github.com/user-attachments/assets/870517ec-9aad-4e81-b1fa-a7d6a8308798" />
+<img width="1918" height="1012" alt="Screenshot 2025-07-24 143231" src="https://github.com/user-attachments/assets/eb52269e-2208-4f3b-bafa-135b9ad7ea39" />
+<img width="1918" height="1010" alt="Screenshot 2025-07-24 143255" src="https://github.com/user-attachments/assets/7c78f65e-802e-41fa-bc03-7b2c3cb62eba" />
+<img width="1917" height="1012" alt="Screenshot 2025-07-24 143310" src="https://github.com/user-attachments/assets/4b01d896-d3b5-4542-a577-955bb8baef1a" />
+<img width="1915" height="1010" alt="Screenshot 2025-07-24 143323" src="https://github.com/user-attachments/assets/a1376669-c14e-42d5-b9de-61f534641a78" />
+<img width="1918" height="997" alt="Screenshot 2025-07-24 143338" src="https://github.com/user-attachments/assets/e08ef6fd-ea32-4a4e-b064-f693531497e7" />
+<img width="1917" height="1002" alt="Screenshot 2025-07-24 143352" src="https://github.com/user-attachments/assets/53e92cea-b23a-46d7-8619-942579022dbe" />
+<img width="1918" height="1016" alt="Screenshot 2025-07-24 143411" src="https://github.com/user-attachments/assets/3e9c9002-bcb0-4995-890b-b6bbe3295d03" />
+<img width="1918" height="1007" alt="Screenshot 2025-07-24 143437" src="https://github.com/user-attachments/assets/d12b33dc-3242-4290-bef1-e03697f6d654" />
+<img width="1918" height="1010" alt="Screenshot 2025-07-24 143505" src="https://github.com/user-attachments/assets/ebe95fa2-31b6-4106-a411-765f6436e374" />
+<img width="1915" height="1002" alt="Screenshot 2025-07-24 143641" src="https://github.com/user-attachments/assets/090437d0-c2be-437f-920f-1904c1016527" />
+
 ## Documentație Proiect Trap-The-Mouse
 
 ### Structura aplicației
