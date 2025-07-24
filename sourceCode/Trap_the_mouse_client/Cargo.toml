@@ -1,0 +1,9 @@
+[package]
+name = "Trap_the_mouse_client"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+iced = { git = "https://github.com/iced-rs/iced.git", rev = "f2c9b6b2", features = ["canvas", "advanced", "image"] }
+tokio = { version = "1", features = ["full"] }
+wasm-bindgen = "0.2.100"

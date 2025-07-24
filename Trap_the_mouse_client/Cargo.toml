@@ -1,9 +1,0 @@
-[package]
-name = "Trap_the_mouse_client"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-iced = {git="https://github.com/iced-rs/iced.git", features = ["canvas", "advanced","image"] }
-tokio = { version = "1", features = ["full"] }
-
